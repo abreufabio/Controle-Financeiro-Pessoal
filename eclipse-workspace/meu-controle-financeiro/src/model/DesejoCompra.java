@@ -67,29 +67,4 @@ public class DesejoCompra {
 		return Math.max(0, 3 -diasPassados);
 	}
 	
-	public static void main(String[] args) {
-	    // Teste 1: Criar novo desejo
-	    System.out.println("=== TESTE 1: Criando novo desejo ===");
-	    DesejoCompra desejo1 = new DesejoCompra("PlayStation 5", 4500.00);
-	    System.out.println(desejo1);
-	    System.out.println("Liberado? " + desejo1.isLiberado());
-	    System.out.println("Dias restantes: " + desejo1.getDiasRestantes());
-	    
-	    // Teste 2: Criar desejo com data antiga (já liberado)
-	    System.out.println("\n=== TESTE 2: Desejo com data antiga ===");
-	    LocalDate dataAntiga = LocalDate.now().minusDays(5);
-	    DesejoCompra desejo2 = new DesejoCompra(1, "TV 4K", 3200.00, dataAntiga);
-	    System.out.println(desejo2);
-	    System.out.println("Data criação: " + desejo2.getDataCriacao());
-	    System.out.println("Liberado? " + desejo2.isLiberado());
-	    System.out.println("Dias restantes: " + desejo2.getDiasRestantes());
-	    
-	    // Teste 3: Desejo com 2 dias (ainda não liberado)
-	    System.out.println("\n=== TESTE 3: Desejo com 2 dias ===");
-	    LocalDate data2Dias = LocalDate.now().minusDays(2);
-	    DesejoCompra desejo3 = new DesejoCompra(2, "Fone Bluetooth", 250.00, data2Dias);
-	    System.out.println(desejo3);
-	    System.out.println("Liberado? " + desejo3.isLiberado());
-	    System.out.println("Dias restantes: " + desejo3.getDiasRestantes());
-	}
 }
