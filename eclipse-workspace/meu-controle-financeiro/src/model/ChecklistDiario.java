@@ -47,7 +47,7 @@ public class ChecklistDiario {
 
 	// Retorna status do checklist para exibição
 	public String getStatusTexto() {
-		return anotouGastos ? "✓ Registrado" : "✗ Pendente";
+		return anotouGastos ? "Registrado" : "Pendente";
 	}
 
 	@Override

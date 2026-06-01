@@ -64,7 +64,7 @@ public class DesejoCompra {
 	//Retorna dias retantes para liberação
 	public long getDiasRestantes() {
 		long diasPassados = ChronoUnit.DAYS.between(dataCriacao, LocalDate.now());
-		return Math.max(0, 3 -diasPassados);
+		return Math.max(0, 3 - diasPassados);
 	}
 	
 }
