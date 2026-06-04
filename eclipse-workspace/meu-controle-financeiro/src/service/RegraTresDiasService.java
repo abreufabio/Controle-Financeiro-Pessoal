@@ -38,7 +38,7 @@ public class RegraTresDiasService {
     }
     
     // Lista todos os desejos com seus status (liberado ou não)
-    public List<DesejoCompra> ListarDesejos() throws SQLException {
+    public List<DesejoCompra> listarDesejos() throws SQLException {
         // Delega a responsabilidade para o DAO
         return desejoDAO.listarTodos();
     }

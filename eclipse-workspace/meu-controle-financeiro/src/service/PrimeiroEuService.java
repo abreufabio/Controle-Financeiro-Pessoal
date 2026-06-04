@@ -68,11 +68,11 @@ public class PrimeiroEuService {
                 "═".repeat(50) + "\n" +          // Linha superior (50 caracteres "═")
                 "          PLANO DO PRIMEIRO EU (10%%)\n" +  // Título com escape do %
                 "═".repeat(50) + "\n" +          // Linha separadora
-                "💰 Renda Bruta:      R$ %,10.2f\n" +  // Renda total (%,10.2f formata com separador de milhar)
-                "🏦 Poupança (10%%):   R$ %,10.2f\n" +  // Valor a poupar
-                "💳 Disponível:       R$ %,10.2f\n" +  // Valor disponível
+                "Renda Bruta:      R$ %,10.2f\n" +  // Renda total (%,10.2f formata com separador de milhar)
+                "Poupança (10%%):   R$ %,10.2f\n" +  // Valor a poupar
+                "Disponível:       R$ %,10.2f\n" +  // Valor disponível
                 "═".repeat(50) + "\n" +          // Linha final
-                "✅ Ação: Transfira R$ %,10.2f para sua conta de investimentos\n" +
+                "Ação: Transfira R$ %,10.2f para sua conta de investimentos\n" +
                 "   antes de qualquer gasto!",
                 valorTotal,        // Primeiro %: Renda Bruta
                 valorPoupar,       // Segundo %: Poupança
