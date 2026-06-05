@@ -1,6 +1,5 @@
 package view;
 
-import dao.HistoricoRendaDAO;
 import model.DesejoCompra;
 import service.ChecklistService;
 import service.PrimeiroEuService;
@@ -399,14 +398,15 @@ public class MainDesktopApp extends JFrame {
 
     private void limparDesejosLiberados() {
         try {
-            var desejos = regraTresDiasService.listarDesejos();
-            long liberadosCount = desejos.stream().filter(d -> d.getDiasRestantes() == 0).count();
-
-            if (liberadosCount == 0) {
+            // Usa o novo método para verificar se existe desejo liberado
+            if (!regraTresDiasService.existeDesejoLiberado()) {
                 mostrarAviso("Nao ha desejos liberados para remover.\nOs desejos so sao liberados apos 3 dias.");
                 return;
             }
-
+            
+            var resumo = regraTresDiasService.getResumoDesejos();
+            long liberadosCount = resumo.getLiberados();
+            
             String msg = (liberadosCount == 1) ? "Existe 1 desejo liberado. Deseja remove-lo?" 
                 : "Existem " + liberadosCount + " desejos liberados. Deseja remove-los?";
 
@@ -601,14 +601,19 @@ public class MainDesktopApp extends JFrame {
 
     private void atualizarLabelStatus(JLabel lblStatus) {
         try {
-            if (checklistService.jaRegistrouHoje()) {
-                var hoje = checklistService.getChecklistHoje();
-                lblStatus.setText(hoje.isAnotouGastos() ? "Hoje voce ja registrou seus gastos. Parabens!" 
-                    : "Hoje voce marcou que nao registrou gastos. Que tal registrar agora?");
-                lblStatus.setForeground(hoje.isAnotouGastos() ? SUCCESS : WARNING);
-            } else {
-                lblStatus.setText("Voce ainda nao registrou nada hoje. Responda acima!");
-                lblStatus.setForeground(TEXT_SECONDARY);
+            var status = checklistService.getStatusHoje();
+            lblStatus.setText(status.getTexto());
+            
+            // Mapeia a referência da cor para a cor real
+            switch (status.getCorReferencia()) {
+                case "SUCCESS":
+                    lblStatus.setForeground(SUCCESS);
+                    break;
+                case "WARNING":
+                    lblStatus.setForeground(WARNING);
+                    break;
+                default:
+                    lblStatus.setForeground(TEXT_SECONDARY);
             }
         } catch (SQLException e) {
             lblStatus.setText("Erro ao verificar status");
@@ -697,38 +702,40 @@ public class MainDesktopApp extends JFrame {
         sb.append("              DASHBOARD FINANCEIRO\n");
         sb.append("=".repeat(60)).append("\n\n");
 
+        // REGRA DOS 3 DIAS - usando ResumoDesejos
         sb.append("REGRA DOS 3 DIAS\n").append("-".repeat(40)).append("\n");
         try {
-            var desejos = regraTresDiasService.listarDesejos();
-            long bloqueados = desejos.stream().filter(d -> d.getDiasRestantes() > 0).count();
-            long liberados = desejos.stream().filter(d -> d.getDiasRestantes() == 0).count();
-            double totalBloqueado = desejos.stream().filter(d -> d.getDiasRestantes() > 0).mapToDouble(DesejoCompra::getValor).sum();
-            sb.append(String.format("Desejos bloqueados:   %d\n", bloqueados));
-            sb.append(String.format("Desejos liberados:    %d\n", liberados));
-            sb.append(String.format("Total bloqueado:      R$ %,10.2f\n", totalBloqueado));
-            sb.append(String.format("Economia potencial:   R$ %,10.2f\n\n", totalBloqueado));
-        } catch (SQLException e) { sb.append("Erro ao carregar desejos\n\n"); }
+            var resumo = regraTresDiasService.getResumoDesejos();
+            sb.append(String.format("Desejos bloqueados:   %d\n", resumo.getBloqueados()));
+            sb.append(String.format("Desejos liberados:    %d\n", resumo.getLiberados()));
+            sb.append(String.format("Total bloqueado:      R$ %,10.2f\n", resumo.getTotalBloqueado()));
+            sb.append(String.format("Economia potencial:   R$ %,10.2f\n\n", resumo.getEconomiaPotencial()));
+        } catch (SQLException e) { 
+            sb.append("Erro ao carregar desejos\n\n"); 
+        }
 
+        // REGRA DO PRIMEIRO EU - usando getTotalRendaMesAtual do Service
         sb.append("REGRA DO PRIMEIRO EU\n").append("-".repeat(40)).append("\n");
         try {
-            HistoricoRendaDAO rendaDAO = new HistoricoRendaDAO();
-            double totalRendaMes = rendaDAO.getTotalRendaMesAtual();
+            double totalRendaMes = primeiroEuService.getTotalRendaMesAtual();
             double totalPoupadoMes = totalRendaMes * 0.10;
             sb.append(String.format("Renda total do mes:   R$ %,10.2f\n", totalRendaMes));
             sb.append(String.format("Total poupado (10%%): R$ %,10.2f\n", totalPoupadoMes));
             sb.append(String.format("Meta anual:           R$ %,10.2f\n\n", totalPoupadoMes * 12));
-        } catch (SQLException e) { sb.append("Erro ao carregar rendas\n\n"); }
+        } catch (SQLException e) { 
+            sb.append("Erro ao carregar rendas\n\n"); 
+        }
 
+        // CHECKLIST DIARIO - usando ResumoChecklist
         sb.append("CHECKLIST DIARIO\n").append("-".repeat(40)).append("\n");
         try {
-            double taxa = checklistService.getTaxaSucesso();
-            sb.append(String.format("Taxa de sucesso:      %.1f%%\n", taxa));
-            if (checklistService.jaRegistrouHoje()) {
-                var hoje = checklistService.getChecklistHoje();
-                sb.append("Status hoje:          " + (hoje.isAnotouGastos() ? "Registrado" : "Pendente") + "\n");
-            } else { sb.append("Status hoje:          Nao registrado\n"); }
-            sb.append("\n").append(taxa >= 80 ? "Excelente! Continue assim!" : (taxa >= 50 ? "Bom progresso!" : "Registre seus gastos mais vezes!"));
-        } catch (SQLException e) { sb.append("Erro ao carregar checklist\n"); }
+            var resumo = checklistService.getResumoChecklist();
+            sb.append(String.format("Taxa de sucesso:      %.1f%%\n", resumo.getTaxaSucesso()));
+            sb.append("Status hoje:          " + resumo.getStatusHojeTexto() + "\n");
+            sb.append("\n").append(resumo.getRecomendacao());
+        } catch (SQLException e) { 
+            sb.append("Erro ao carregar checklist\n"); 
+        }
 
         sb.append("\n\n").append("=".repeat(60)).append("\n");
         sb.append("     Continue assim! Controle financeiro e habito!\n");
