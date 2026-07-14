@@ -11,21 +11,28 @@ import java.util.List;
 public class ChecklistDiarioDAO {
 
     public void salvarOuAtualizar(ChecklistDiario checklist) throws SQLException {
-        String sql = "insert into checklist_diario (data_verificacao, anotou_gastos) values (?, ?) " +
-                     "on duplicate key update anotou_gastos = values(anotou_gastos)";
+        String sql = "INSERT INTO checklist_diario (data_verificacao, anotou_gastos, total_gasto_dia) VALUES (?, ?, ?) " +
+                     "ON DUPLICATE KEY UPDATE anotou_gastos = VALUES(anotou_gastos), total_gasto_dia = VALUES(total_gasto_dia)";
 
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setString(1, checklist.getDataVerificacao().toString());
             pstmt.setInt(2, checklist.isAnotouGastos() ? 1 : 0);
+            pstmt.setDouble(3, checklist.getTotalGastoDia());
 
             pstmt.executeUpdate();
+
+            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    checklist.setId(generatedKeys.getInt(1));
+                }
+            }
         }
     }
 
     public ChecklistDiario buscarPorData(LocalDate data) throws SQLException {
-        String sql = "select * from checklist_diario where data_verificacao = ?";
+        String sql = "SELECT * FROM checklist_diario WHERE data_verificacao = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -37,7 +44,8 @@ public class ChecklistDiarioDAO {
                     return new ChecklistDiario(
                         rs.getInt("id"),
                         LocalDate.parse(rs.getString("data_verificacao")),
-                        rs.getInt("anotou_gastos") == 1
+                        rs.getInt("anotou_gastos") == 1,
+                        rs.getDouble("total_gasto_dia")
                     );
                 }
             }
@@ -47,7 +55,7 @@ public class ChecklistDiarioDAO {
 
     public List<ChecklistDiario> listarTodos() throws SQLException {
         List<ChecklistDiario> lista = new ArrayList<>();
-        String sql = "select * from checklist_diario order by data_verificacao desc";
+        String sql = "SELECT * FROM checklist_diario ORDER BY data_verificacao DESC";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement stmt = conn.createStatement();
@@ -57,7 +65,8 @@ public class ChecklistDiarioDAO {
                 ChecklistDiario checklist = new ChecklistDiario(
                     rs.getInt("id"),
                     LocalDate.parse(rs.getString("data_verificacao")),
-                    rs.getInt("anotou_gastos") == 1
+                    rs.getInt("anotou_gastos") == 1,
+                    rs.getDouble("total_gasto_dia")
                 );
                 lista.add(checklist);
             }
@@ -69,8 +78,20 @@ public class ChecklistDiarioDAO {
         return buscarPorData(LocalDate.now()) != null;
     }
 
+    public void atualizarTotalGasto(int checklistId, double novoTotal) throws SQLException {
+        String sql = "UPDATE checklist_diario SET total_gasto_dia = ? WHERE id = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setDouble(1, novoTotal);
+            pstmt.setInt(2, checklistId);
+            pstmt.executeUpdate();
+        }
+    }
+
     public double getTaxaSucesso() throws SQLException {
-        String sql = "select count(*) as total, sum(anotou_gastos) as sucessos from checklist_diario";
+        String sql = "SELECT COUNT(*) AS total, SUM(anotou_gastos) AS sucessos FROM checklist_diario";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement stmt = conn.createStatement();

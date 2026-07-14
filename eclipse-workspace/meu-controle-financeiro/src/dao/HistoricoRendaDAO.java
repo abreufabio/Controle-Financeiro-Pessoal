@@ -11,13 +11,15 @@ import java.util.List;
 public class HistoricoRendaDAO {
 
     public void salvar(HistoricoRenda renda) throws SQLException {
-        String sql = "insert into historico_renda (valor_total, data_registro) values (?, ?)";
+        String sql = "INSERT INTO historico_rendas (valor_total, descricao, categoria, data_registro) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setDouble(1, renda.getValorTotal());
-            pstmt.setString(2, renda.getDataRegistro().toString());
+            pstmt.setString(2, renda.getDescricao());
+            pstmt.setString(3, renda.getCategoriaString());
+            pstmt.setString(4, renda.getDataRegistro().toString());
             pstmt.executeUpdate();
 
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
@@ -30,7 +32,7 @@ public class HistoricoRendaDAO {
 
     public List<HistoricoRenda> listarTodos() throws SQLException {
         List<HistoricoRenda> lista = new ArrayList<>();
-        String sql = "select * from historico_renda order by data_registro desc";
+        String sql = "SELECT * FROM historico_rendas ORDER BY data_registro DESC";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement stmt = conn.createStatement();
@@ -40,6 +42,8 @@ public class HistoricoRendaDAO {
                 HistoricoRenda renda = new HistoricoRenda(
                     rs.getInt("id"),
                     rs.getDouble("valor_total"),
+                    rs.getString("descricao"),
+                    rs.getString("categoria"),
                     LocalDate.parse(rs.getString("data_registro"))
                 );
                 lista.add(renda);
@@ -48,19 +52,21 @@ public class HistoricoRendaDAO {
         return lista;
     }
 
-    public HistoricoRenda buscarPorData(LocalDate data) throws SQLException {
-        String sql = "select * from historico_renda where data_registro = ?";
+    public HistoricoRenda buscarPorId(int id) throws SQLException {
+        String sql = "SELECT * FROM historico_rendas WHERE id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, data.toString());
+            pstmt.setInt(1, id);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return new HistoricoRenda(
                         rs.getInt("id"),
                         rs.getDouble("valor_total"),
+                        rs.getString("descricao"),
+                        rs.getString("categoria"),
                         LocalDate.parse(rs.getString("data_registro"))
                     );
                 }
@@ -70,7 +76,7 @@ public class HistoricoRendaDAO {
     }
 
     public boolean remover(int id) throws SQLException {
-        String sql = "DELETE FROM historico_renda WHERE id = ?";
+        String sql = "DELETE FROM historico_rendas WHERE id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -80,20 +86,8 @@ public class HistoricoRendaDAO {
         }
     }
 
-    public int removerPorPeriodo(LocalDate dataInicio, LocalDate dataFim) throws SQLException {
-        String sql = "DELETE FROM historico_renda WHERE data_registro BETWEEN ? AND ?";
-
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, dataInicio.toString());
-            pstmt.setString(2, dataFim.toString());
-            return pstmt.executeUpdate();
-        }
-    }
-
     public double getTotalRendaMesAtual() throws SQLException {
-        String sql = "SELECT SUM(valor_total) AS total FROM historico_renda " +
+        String sql = "SELECT SUM(valor_total) AS total FROM historico_rendas " +
                      "WHERE YEAR(data_registro) = YEAR(CURDATE()) AND " +
                      "MONTH(data_registro) = MONTH(CURDATE())";
 
@@ -109,7 +103,7 @@ public class HistoricoRendaDAO {
     }
 
     public double getTotalRendaPorMes(int ano, int mes) throws SQLException {
-        String sql = "SELECT SUM(valor_total) AS total FROM historico_renda " +
+        String sql = "SELECT SUM(valor_total) AS total FROM historico_rendas " +
                      "WHERE YEAR(data_registro) = ? AND MONTH(data_registro) = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -122,6 +116,40 @@ public class HistoricoRendaDAO {
                 if (rs.next()) {
                     return rs.getDouble("total");
                 }
+            }
+        }
+        return 0.0;
+    }
+    
+    public double getTotalRendaFixoMesAtual() throws SQLException {
+        String sql = "SELECT SUM(valor_total) AS total FROM historico_rendas " +
+                     "WHERE YEAR(data_registro) = YEAR(CURDATE()) AND " +
+                     "MONTH(data_registro) = MONTH(CURDATE()) AND " +
+                     "categoria = 'FIXO'";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getDouble("total");
+            }
+        }
+        return 0.0;
+    }
+    
+    public double getTotalRendaExtraMesAtual() throws SQLException {
+        String sql = "SELECT SUM(valor_total) AS total FROM historico_rendas " +
+                     "WHERE YEAR(data_registro) = YEAR(CURDATE()) AND " +
+                     "MONTH(data_registro) = MONTH(CURDATE()) AND " +
+                     "categoria = 'EXTRA'";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getDouble("total");
             }
         }
         return 0.0;

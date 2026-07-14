@@ -1,7 +1,13 @@
 package view;
 
+import model.CategoriaGasto;
+import model.CategoriaRenda;
+import model.ChecklistDiario;
 import model.DesejoCompra;
+import model.GastoDiario;
+import model.HistoricoRenda;
 import service.ChecklistService;
+import service.GastoService;
 import service.PrimeiroEuService;
 import service.RegraTresDiasService;
 import repository.DatabaseManager;
@@ -13,17 +19,10 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Classe principal da aplicação de Controle Financeiro Pessoal.
- * Responsável pela interface gráfica e navegação entre os módulos.
- * 
- * Arquitetura: MVC com padrão DAO e Services.
- * Tema visual: Linux Mint MATE (cores escuras com destaque verde).
- */
 public class MainDesktopApp extends JFrame {
 
     // ============================================================
-    // 1. CONSTANTES DE COR (TEMA LINUX MINT MATE)
+    // CONSTANTES
     // ============================================================
     
     private static final Color BG_DARK = new Color(47, 52, 55);
@@ -39,7 +38,7 @@ public class MainDesktopApp extends JFrame {
     private static final Color ACCENT = new Color(102, 187, 106);
 
     // ============================================================
-    // 2. COMPONENTES PRINCIPAIS
+    // COMPONENTES
     // ============================================================
     
     private JPanel cardPanel;
@@ -47,21 +46,23 @@ public class MainDesktopApp extends JFrame {
     private DefaultTableModel tableModelDesejos;
 
     // ============================================================
-    // 3. SERVICES
+    // SERVICES
     // ============================================================
     
     private final RegraTresDiasService regraTresDiasService;
     private final PrimeiroEuService primeiroEuService;
     private final ChecklistService checklistService;
+    private final GastoService gastoService;
 
     // ============================================================
-    // 4. CONSTRUTOR
+    // CONSTRUTOR
     // ============================================================
     
     public MainDesktopApp() {
         this.regraTresDiasService = new RegraTresDiasService();
         this.primeiroEuService = new PrimeiroEuService();
         this.checklistService = new ChecklistService();
+        this.gastoService = new GastoService();
 
         setTitle("Controle Financeiro Pessoal");
         setSize(900, 650);
@@ -77,7 +78,7 @@ public class MainDesktopApp extends JFrame {
     }
 
     // ============================================================
-    // 5. CONFIGURAÇÃO GLOBAL
+    // CONFIGURAÇÃO GLOBAL
     // ============================================================
     
     private void verificarConexaoBanco() {
@@ -123,7 +124,7 @@ public class MainDesktopApp extends JFrame {
     }
 
     // ============================================================
-    // 6. BARRA DE NAVEGAÇÃO
+    // BARRA DE NAVEGAÇÃO
     // ============================================================
     
     private JPanel criarBarraNavegacao() {
@@ -156,7 +157,7 @@ public class MainDesktopApp extends JFrame {
     }
 
     // ============================================================
-    // 7. PAINEL MENU
+    // PAINEL MENU
     // ============================================================
     
     private JPanel criarPainelMenu() {
@@ -194,23 +195,18 @@ public class MainDesktopApp extends JFrame {
     private JPanel criarCardsMenu() {
         JPanel cardsPanel = new JPanel(new GridLayout(2, 2, 25, 25));
         cardsPanel.setOpaque(false);
-        cardsPanel.add(criarCard("Regra dos 3 Dias",
-                "Evite compras por impulso!\nTodo desejo fica bloqueado por tres dias\nantes de ser liberado para compra.", MINT));
-        cardsPanel.add(criarCard("Regra do Primeiro Eu",
-                "Poupe 10% da sua renda antes de qualquer gasto.\nInvista no seu futuro primeiro!", SUCCESS));
-        cardsPanel.add(criarCard("Checklist Diario",
-                "Registre seus gastos diariamente.\nMantenha o controle financeiro em dia!", ACCENT));
-        cardsPanel.add(criarCard("Dashboard",
-                "Visualize metricas e indicadores.\nAcompanhe seu progresso financeiro!", WARNING));
+        cardsPanel.add(criarCard("Regra dos 3 Dias", "Evite compras por impulso!\nTodo desejo fica bloqueado por tres dias\nantes de ser liberado para compra.", MINT));
+        cardsPanel.add(criarCard("Regra do Primeiro Eu", "Poupe 10% da sua renda antes de qualquer gasto.\nInvista no seu futuro primeiro!", SUCCESS));
+        cardsPanel.add(criarCard("Checklist Diario", "Registre seus gastos diariamente.\nMantenha o controle financeiro em dia!", ACCENT));
+        cardsPanel.add(criarCard("Dashboard", "Visualize metricas e indicadores.\nAcompanhe seu progresso financeiro!", WARNING));
         return cardsPanel;
     }
 
     private JPanel criarCard(String titulo, String descricao, Color cor) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(PANEL_DARK);
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(cor, 2),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(cor, 2), 
+        		BorderFactory.createEmptyBorder(20, 20, 20, 20)));
 
         JLabel lblTitulo = new JLabel(titulo);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 18));
@@ -230,14 +226,12 @@ public class MainDesktopApp extends JFrame {
 
         card.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                card.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(cor.brighter(), 2),
-                    BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+                card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(cor.brighter(), 2), 
+                		BorderFactory.createEmptyBorder(20, 20, 20, 20)));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                card.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(cor, 2),
-                    BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+                card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(cor, 2), 
+                		BorderFactory.createEmptyBorder(20, 20, 20, 20)));
             }
         });
 
@@ -245,7 +239,7 @@ public class MainDesktopApp extends JFrame {
     }
 
     // ============================================================
-    // 8. PAINEL REGRA DOS 3 DIAS
+    // PAINEL REGRA DOS 3 DIAS
     // ============================================================
     
     private JPanel criarPainelRegraTresDias() {
@@ -266,10 +260,8 @@ public class MainDesktopApp extends JFrame {
 
     private JPanel criarFormularioRegraTresDias() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
-
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(PANEL_DARK);
-        
         TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(MINT), "Novo Desejo de Compra");
         border.setTitleColor(MINT);
         formPanel.setBorder(border);
@@ -285,23 +277,11 @@ public class MainDesktopApp extends JFrame {
         JLabel lblValor = new JLabel("Valor (R$):");
         lblValor.setForeground(TEXT_PRIMARY);
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.EAST;
-        formPanel.add(lblItem, gbc);
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        formPanel.add(txtItem, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.EAST;
-        formPanel.add(lblValor, gbc);
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        formPanel.add(txtValor, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.anchor = GridBagConstraints.EAST; formPanel.add(lblItem, gbc);
+        gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST; formPanel.add(txtItem, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.anchor = GridBagConstraints.EAST; formPanel.add(lblValor, gbc);
+        gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST; formPanel.add(txtValor, gbc);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
         formPanel.add(criarBotaoAdicionarDesejo(txtItem, txtValor), gbc);
 
         String[] colunas = { "Item", "Valor", "Data Registro", "Status", "Dias Restantes" };
@@ -317,7 +297,6 @@ public class MainDesktopApp extends JFrame {
         table.setSelectionBackground(MINT);
         table.setSelectionForeground(Color.BLACK);
         table.setFont(new Font("Arial", Font.PLAIN, 12));
-        
         table.getTableHeader().setBackground(NAV_DARK);
         table.getTableHeader().setForeground(TEXT_PRIMARY);
         table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
@@ -337,7 +316,6 @@ public class MainDesktopApp extends JFrame {
         panel.add(formPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        
         return panel;
     }
 
@@ -348,9 +326,7 @@ public class MainDesktopApp extends JFrame {
         field.setCaretColor(TEXT_PRIMARY);
         field.setSelectedTextColor(Color.BLACK);
         field.setSelectionColor(MINT);
-        field.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(BORDER, 1),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        field.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER, 1), BorderFactory.createEmptyBorder(8, 10, 8, 10)));
         return field;
     }
 
@@ -362,26 +338,14 @@ public class MainDesktopApp extends JFrame {
                 String nome = txtItem.getText().trim();
                 String valorStr = txtValor.getText().trim();
 
-                if (nome.isEmpty()) {
-                    mostrarAviso("Digite o nome do item desejado.");
-                    txtItem.requestFocus();
-                    return;
-                }
-                if (valorStr.isEmpty()) {
-                    mostrarAviso("Digite o valor do item.");
-                    txtValor.requestFocus();
-                    return;
-                }
+                if (nome.isEmpty()) { mostrarAviso("Digite o nome do item desejado."); txtItem.requestFocus(); return; }
+                if (valorStr.isEmpty()) { mostrarAviso("Digite o valor do item."); txtValor.requestFocus(); return; }
 
                 double valor = Double.parseDouble(valorStr);
-                if (valor <= 0) {
-                    mostrarAviso("O valor deve ser maior que zero.");
-                    return;
-                }
+                if (valor <= 0) { mostrarAviso("O valor deve ser maior que zero."); return; }
 
                 regraTresDiasService.adicionarDesejo(nome, valor);
-                txtItem.setText("");
-                txtValor.setText("");
+                txtItem.setText(""); txtValor.setText("");
                 atualizarTabelaDesejos();
                 mostrarSucesso("Item bloqueado por 3 dias!");
 
@@ -398,23 +362,19 @@ public class MainDesktopApp extends JFrame {
 
     private void limparDesejosLiberados() {
         try {
-            // Usa o novo método para verificar se existe desejo liberado
             if (!regraTresDiasService.existeDesejoLiberado()) {
                 mostrarAviso("Nao ha desejos liberados para remover.\nOs desejos so sao liberados apos 3 dias.");
                 return;
             }
-            
             var resumo = regraTresDiasService.getResumoDesejos();
             long liberadosCount = resumo.getLiberados();
-            
-            String msg = (liberadosCount == 1) ? "Existe 1 desejo liberado. Deseja remove-lo?" 
-                : "Existem " + liberadosCount + " desejos liberados. Deseja remove-los?";
-
+            String msg = (liberadosCount == 1) ? "Existe 1 desejo liberado. Deseja remove-lo?" : "Existem " 
+            		+ liberadosCount + " desejos liberados. Deseja remove-los?";
             if (mostrarConfirmacaoEscura(msg, "Confirmar Remocao")) {
                 regraTresDiasService.limparLiberados();
                 atualizarTabelaDesejos();
-                String msgSucesso = (liberadosCount == 1) ? "1 desejo liberado removido!" 
-                    : liberadosCount + " desejos liberados removidos!";
+                String msgSucesso = (liberadosCount == 1) ? "1 desejo liberado removido!" : liberadosCount + 
+                		" desejos liberados removidos!";
                 mostrarSucesso(msgSucesso);
             }
         } catch (SQLException ex) {
@@ -425,14 +385,9 @@ public class MainDesktopApp extends JFrame {
     private void atualizarTabelaDesejos() {
         if (tableModelDesejos == null) return;
         tableModelDesejos.setRowCount(0);
-        
         try {
             var desejos = regraTresDiasService.listarDesejos();
-            if (desejos.isEmpty()) {
-                tableModelDesejos.addRow(new Object[] { "Nenhum item cadastrado", "", "", "", "" });
-                return;
-            }
-
+            if (desejos.isEmpty()) { tableModelDesejos.addRow(new Object[] { "Nenhum item cadastrado", "", "", "", "" }); return; }
             for (DesejoCompra d : desejos) {
                 long dias = d.getDiasRestantes();
                 tableModelDesejos.addRow(new Object[] {
@@ -449,209 +404,288 @@ public class MainDesktopApp extends JFrame {
     }
 
     // ============================================================
-    // 9. PAINEL PRIMEIRO EU
+    // PAINEL PRIMEIRO EU
     // ============================================================
     
     private JPanel criarPainelPrimeiroEu() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(BG_DARK);
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
-        panel.add(criarTituloPrimeiroEu(), BorderLayout.NORTH);
-        panel.add(criarFormularioPrimeiroEu(), BorderLayout.CENTER);
-        return panel;
-    }
-
-    private JLabel criarTituloPrimeiroEu() {
-        JLabel titulo = new JLabel("Regra do Primeiro Eu - Poupe 10% da Renda", SwingConstants.CENTER);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JLabel titulo = new JLabel("Registro de Entradas (Rendas)", SwingConstants.CENTER);
         titulo.setFont(new Font("Arial", Font.BOLD, 20));
         titulo.setForeground(SUCCESS);
-        return titulo;
-    }
-
-    private JPanel criarFormularioPrimeiroEu() {
-        JPanel panel = new JPanel(new BorderLayout(15, 15));
-        panel.setBackground(BG_DARK);
-
-        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 20));
-        inputPanel.setBackground(PANEL_DARK);
+        panel.add(titulo, BorderLayout.NORTH);
         
-        TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(SUCCESS), "Registrar Nova Renda");
-        border.setTitleColor(SUCCESS);
-        inputPanel.setBorder(border);
-
-        JLabel lblRenda = new JLabel("Renda bruta: R$ ");
-        lblRenda.setForeground(TEXT_PRIMARY);
-        lblRenda.setFont(new Font("Arial", Font.BOLD, 14));
-
-        JTextField txtRenda = criarTextField(12);
-        txtRenda.setFont(new Font("Arial", Font.PLAIN, 14));
-
-        JButton btnCalcular = criarBotaoRedondo("Processar Renda", SUCCESS, SUCCESS.brighter());
-        btnCalcular.setForeground(Color.WHITE);
-
-        inputPanel.add(lblRenda);
-        inputPanel.add(txtRenda);
-        inputPanel.add(btnCalcular);
-
-        JTextArea txtResultado = new JTextArea(12, 45);
-        txtResultado.setEditable(false);
-        txtResultado.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        txtResultado.setBackground(PANEL_DARK);
-        txtResultado.setForeground(TEXT_PRIMARY);
+        // Formulário
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(PANEL_DARK);
+        formPanel.setBorder(BorderFactory.createTitledBorder("Adicionar Entrada"));
         
-        TitledBorder resultBorder = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(SUCCESS), "Plano de Alocacao");
-        resultBorder.setTitleColor(SUCCESS);
-        txtResultado.setBorder(resultBorder);
-
-        JScrollPane scrollResultado = new JScrollPane(txtResultado);
-        scrollResultado.getViewport().setBackground(PANEL_DARK);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
         
-        btnCalcular.addActionListener(e -> {
+        JTextField txtDescricao = criarTextField(20);
+        JTextField txtValor = criarTextField(10);
+        JComboBox<String> cmbCategoria = new JComboBox<>(new String[]{ "Fixo", "Extra" });
+        cmbCategoria.setBackground(PANEL_DARK);
+        cmbCategoria.setForeground(TEXT_PRIMARY);
+        cmbCategoria.setFont(new Font("Arial", Font.PLAIN, 12));
+        
+        JLabel lblDescricao = new JLabel("Descrição:");
+        lblDescricao.setForeground(TEXT_PRIMARY);
+        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(lblDescricao, gbc);
+        gbc.gridx = 1; formPanel.add(txtDescricao, gbc);
+        
+        JLabel lblValor = new JLabel("Valor (R$):");
+        lblValor.setForeground(TEXT_PRIMARY);
+        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(lblValor, gbc);
+        gbc.gridx = 1; formPanel.add(txtValor, gbc);
+        
+        JLabel lblCategoria = new JLabel("Tipo:");
+        lblCategoria.setForeground(TEXT_PRIMARY);
+        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(lblCategoria, gbc);
+        gbc.gridx = 1; formPanel.add(cmbCategoria, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
+        JButton btnAdicionar = criarBotaoRedondo("Adicionar Entrada", SUCCESS, SUCCESS.brighter());
+        btnAdicionar.setForeground(Color.WHITE);
+        formPanel.add(btnAdicionar, gbc);
+        
+        // Tabela
+        String[] colunas = {"Data", "Valor", "Descrição", "Tipo"};
+        DefaultTableModel tableModelRendas = new DefaultTableModel(colunas, 0) {
+            @Override public boolean isCellEditable(int row, int col) { return false; }
+        };
+        JTable tableRendas = new JTable(tableModelRendas);
+        tableRendas.setRowHeight(28);
+        tableRendas.setBackground(PANEL_DARK);
+        tableRendas.setForeground(TEXT_PRIMARY);
+        tableRendas.setGridColor(BORDER);
+        tableRendas.getTableHeader().setBackground(NAV_DARK);
+        tableRendas.getTableHeader().setForeground(TEXT_PRIMARY);
+        tableRendas.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        
+        JScrollPane scrollPane = new JScrollPane(tableRendas);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Histórico de Entradas"));
+        scrollPane.getViewport().setBackground(PANEL_DARK);
+        
+        // Bottom
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(BG_DARK);
+        
+        JLabel lblTotalMes = new JLabel("Total do mês: R$ 0,00");
+        lblTotalMes.setFont(new Font("Arial", Font.BOLD, 14));
+        lblTotalMes.setForeground(WARNING);
+        bottomPanel.add(lblTotalMes, BorderLayout.WEST);
+        
+        JButton btnVerDashboard = criarBotaoRedondo("Ver Dashboard", MINT, MINT.brighter());
+        btnVerDashboard.setForeground(Color.WHITE);
+        btnVerDashboard.addActionListener(e -> cardLayout.show(cardPanel, "Dashboard"));
+        bottomPanel.add(btnVerDashboard, BorderLayout.EAST);
+        
+        carregarRendas(tableModelRendas, lblTotalMes);
+        
+        btnAdicionar.addActionListener(e -> {
             try {
-                String rendaStr = txtRenda.getText().trim();
-                if (rendaStr.isEmpty()) {
-                    mostrarAviso("Digite o valor da renda.");
-                    txtRenda.requestFocus();
-                    return;
-                }
-                double renda = Double.parseDouble(rendaStr);
-                if (renda <= 0) {
-                    mostrarAviso("Valor da renda deve ser maior que zero.");
-                    return;
-                }
-                var resultado = primeiroEuService.processarRenda(renda);
-                txtResultado.setText(resultado.formatarResultado());
-                txtRenda.setText("");
-                mostrarSucesso("Renda registrada!");
+                String descricao = txtDescricao.getText().trim();
+                String valorStr = txtValor.getText().trim();
+                String categoriaStr = (String) cmbCategoria.getSelectedItem();
+                
+                if (descricao.isEmpty()) { mostrarAviso("Digite a descrição."); txtDescricao.requestFocus(); return; }
+                if (valorStr.isEmpty()) { mostrarAviso("Digite o valor."); txtValor.requestFocus(); return; }
+                
+                double valor = Double.parseDouble(valorStr);
+                if (valor <= 0) { mostrarAviso("Valor deve ser maior que zero."); return; }
+                
+                CategoriaRenda categoria = categoriaStr.equals("Fixo") ? CategoriaRenda.FIXO : CategoriaRenda.EXTRA;
+                
+                primeiroEuService.adicionarRenda(valor, descricao, categoria);
+                txtDescricao.setText(""); txtValor.setText("");
+                carregarRendas(tableModelRendas, lblTotalMes);
+                mostrarSucesso("Entrada registrada!");
+                
             } catch (NumberFormatException ex) {
-                mostrarErro("Valor invalido! Use ponto como separador decimal. Ex: 2500.00", ex);
+                mostrarErro("Valor inválido! Use ponto como separador decimal.", ex);
             } catch (IllegalArgumentException | SQLException ex) {
                 mostrarErro(ex.getMessage(), ex);
             }
         });
-
-        panel.add(inputPanel, BorderLayout.NORTH);
-        panel.add(scrollResultado, BorderLayout.CENTER);
+        
+        panel.add(formPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+        
         return panel;
     }
 
+    private void carregarRendas(DefaultTableModel tableModel, JLabel lblTotal) {
+        tableModel.setRowCount(0);
+        try {
+            var rendas = primeiroEuService.listarRendas();
+            double total = 0;
+            
+            for (HistoricoRenda r : rendas) {
+                total += r.getValorTotal();
+                tableModel.addRow(new Object[]{
+                    r.getDataFormatada(),
+                    String.format("R$ %.2f", r.getValorTotal()),
+                    r.getDescricao(),
+                    r.getCategoria().getDescricao()
+                });
+            }
+            lblTotal.setText(String.format("Total do mês: R$ %,10.2f", total));
+        } catch (SQLException e) {
+            mostrarErro("Erro ao carregar rendas", e);
+        }
+    }
+
     // ============================================================
-    // 10. PAINEL CHECKLIST
+    // PAINEL CHECKLIST
     // ============================================================
     
     private JPanel criarPainelChecklist() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(BG_DARK);
-        panel.setBorder(BorderFactory.createEmptyBorder(40, 50, 40, 50));
-        panel.add(criarTituloChecklist(), BorderLayout.NORTH);
-        panel.add(criarConteudoChecklist(), BorderLayout.CENTER);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JLabel titulo = new JLabel("Registro de Gastos", SwingConstants.CENTER);
+        titulo.setFont(new Font("Arial", Font.BOLD, 20));
+        titulo.setForeground(ACCENT);
+        panel.add(titulo, BorderLayout.NORTH);
+        
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(PANEL_DARK);
+        formPanel.setBorder(BorderFactory.createTitledBorder("Adicionar Gasto"));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        
+        JTextField txtDescricao = criarTextField(20);
+        JTextField txtValor = criarTextField(10);
+        JComboBox<String> cmbCategoria = new JComboBox<>(new String[]{ "Fixo Mensal", "Diário" });
+        cmbCategoria.setBackground(PANEL_DARK);
+        cmbCategoria.setForeground(TEXT_PRIMARY);
+        cmbCategoria.setFont(new Font("Arial", Font.PLAIN, 12));
+        
+        JLabel lblDescricao = new JLabel("Descrição:");
+        lblDescricao.setForeground(TEXT_PRIMARY);
+        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(lblDescricao, gbc);
+        gbc.gridx = 1; formPanel.add(txtDescricao, gbc);
+        
+        JLabel lblValor = new JLabel("Valor (R$):");
+        lblValor.setForeground(TEXT_PRIMARY);
+        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(lblValor, gbc);
+        gbc.gridx = 1; formPanel.add(txtValor, gbc);
+        
+        JLabel lblCategoria = new JLabel("Categoria:");
+        lblCategoria.setForeground(TEXT_PRIMARY);
+        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(lblCategoria, gbc);
+        gbc.gridx = 1; formPanel.add(cmbCategoria, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
+        JButton btnAdicionar = criarBotaoRedondo("Adicionar Gasto", SUCCESS, SUCCESS.brighter());
+        btnAdicionar.setForeground(Color.WHITE);
+        formPanel.add(btnAdicionar, gbc);
+        
+        String[] colunas = {"Data", "Valor", "Categoria", "Descrição"};
+        DefaultTableModel tableModelGastos = new DefaultTableModel(colunas, 0) {
+            @Override public boolean isCellEditable(int row, int col) { return false; }
+        };
+        JTable tableGastos = new JTable(tableModelGastos);
+        tableGastos.setRowHeight(28);
+        tableGastos.setBackground(PANEL_DARK);
+        tableGastos.setForeground(TEXT_PRIMARY);
+        tableGastos.setGridColor(BORDER);
+        tableGastos.getTableHeader().setBackground(NAV_DARK);
+        tableGastos.getTableHeader().setForeground(TEXT_PRIMARY);
+        tableGastos.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        
+        JScrollPane scrollPane = new JScrollPane(tableGastos);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Gastos Registrados"));
+        scrollPane.getViewport().setBackground(PANEL_DARK);
+        
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(BG_DARK);
+        JLabel lblTotal = new JLabel("Total: R$ 0,00");
+        lblTotal.setFont(new Font("Arial", Font.BOLD, 16));
+        lblTotal.setForeground(WARNING);
+        bottomPanel.add(lblTotal, BorderLayout.WEST);
+        
+        JButton btnVerDashboard = criarBotaoRedondo("Ver Dashboard", MINT, MINT.brighter());
+        btnVerDashboard.setForeground(Color.WHITE);
+        btnVerDashboard.addActionListener(e -> cardLayout.show(cardPanel, "Dashboard"));
+        bottomPanel.add(btnVerDashboard, BorderLayout.EAST);
+        
+        carregarGastosDoDia(tableModelGastos, lblTotal);
+        
+        btnAdicionar.addActionListener(e -> {
+            try {
+                String descricao = txtDescricao.getText().trim();
+                String valorStr = txtValor.getText().trim();
+                String categoriaStr = (String) cmbCategoria.getSelectedItem();
+                
+                if (descricao.isEmpty()) { mostrarAviso("Digite a descrição do gasto."); txtDescricao.requestFocus(); return; }
+                if (valorStr.isEmpty()) { mostrarAviso("Digite o valor do gasto."); txtValor.requestFocus(); return; }
+                
+                double valor = Double.parseDouble(valorStr);
+                if (valor <= 0) { mostrarAviso("Valor deve ser maior que zero."); return; }
+                
+                CategoriaGasto categoria = categoriaStr.equals("Fixo Mensal") ? CategoriaGasto.FIXO_MENSAL : CategoriaGasto.DIARIO;
+                
+                ChecklistDiario checklist = checklistService.getChecklistHoje();
+                if (checklist == null) {
+                    checklist = new ChecklistDiario(true);
+                    checklistService.registrarChecklist(true);
+                    checklist = checklistService.getChecklistHoje();
+                }
+                
+                gastoService.adicionarGasto(checklist.getId(), descricao, valor, categoria);
+                txtDescricao.setText(""); txtValor.setText("");
+                carregarGastosDoDia(tableModelGastos, lblTotal);
+                mostrarSucesso("Gasto adicionado!");
+                
+            } catch (NumberFormatException ex) {
+                mostrarErro("Valor inválido! Use ponto como separador decimal.", ex);
+            } catch (SQLException | IllegalArgumentException ex) {
+                mostrarErro(ex.getMessage(), ex);
+            }
+        });
+        
+        panel.add(formPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+        
         return panel;
     }
 
-    private JLabel criarTituloChecklist() {
-        JLabel titulo = new JLabel("Checklist Diario de Gastos", SwingConstants.CENTER);
-        titulo.setFont(new Font("Arial", Font.BOLD, 20));
-        titulo.setForeground(ACCENT);
-        return titulo;
-    }
-
-    private JPanel criarConteudoChecklist() {
-        JPanel centerPanel = new JPanel(new GridBagLayout());
-        centerPanel.setBackground(PANEL_DARK);
-        centerPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ACCENT, 1),
-            BorderFactory.createEmptyBorder(30, 30, 30, 30)));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(15, 15, 15, 15);
-
-        JLabel pergunta = new JLabel("Voce registou todos os seus gastos hoje?");
-        pergunta.setFont(new Font("Arial", Font.BOLD, 16));
-        pergunta.setForeground(TEXT_PRIMARY);
-        centerPanel.add(pergunta, gbc);
-
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 10));
-        btnPanel.setBackground(PANEL_DARK);
-
-        JButton btnSim = criarBotaoRedondo("SIM, registrei meus gastos", SUCCESS, SUCCESS.brighter());
-        btnSim.setForeground(Color.WHITE);
-        JButton btnNao = criarBotaoRedondo("NAO, ainda nao registrei", DANGER, DANGER.brighter());
-        btnNao.setForeground(Color.WHITE);
-
-        btnSim.addActionListener(e -> registrarChecklist(true));
-        btnNao.addActionListener(e -> registrarChecklist(false));
-
-        btnPanel.add(btnSim);
-        btnPanel.add(btnNao);
-        centerPanel.add(btnPanel, gbc);
-
-        centerPanel.add(criarLabelStatusChecklist(), gbc);
-        return centerPanel;
-    }
-
-    private JLabel criarLabelStatusChecklist() {
-        JLabel lblStatus = new JLabel();
-        lblStatus.setFont(new Font("Arial", Font.PLAIN, 13));
-        lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
-        atualizarLabelStatus(lblStatus);
-        return lblStatus;
-    }
-
-    private void atualizarLabelStatus(JLabel lblStatus) {
+    private void carregarGastosDoDia(DefaultTableModel tableModel, JLabel lblTotal) {
+        tableModel.setRowCount(0);
         try {
-            var status = checklistService.getStatusHoje();
-            lblStatus.setText(status.getTexto());
+            ChecklistDiario checklist = checklistService.getChecklistHoje();
+            if (checklist == null) { lblTotal.setText("Total: R$ 0,00"); return; }
             
-            // Mapeia a referência da cor para a cor real
-            switch (status.getCorReferencia()) {
-                case "SUCCESS":
-                    lblStatus.setForeground(SUCCESS);
-                    break;
-                case "WARNING":
-                    lblStatus.setForeground(WARNING);
-                    break;
-                default:
-                    lblStatus.setForeground(TEXT_SECONDARY);
-            }
-        } catch (SQLException e) {
-            lblStatus.setText("Erro ao verificar status");
-            lblStatus.setForeground(DANGER);
-        }
-    }
-
-    private void registrarChecklist(boolean anotou) {
-        try {
-            checklistService.registrarChecklist(anotou);
-            mostrarSucesso(anotou ? "Excelente! Continue assim!" : "Registro salvo. Nao esqueca amanha!");
+            var gastos = gastoService.listarGastosDoDia(checklist.getId());
+            double total = 0;
             
-            for (Component comp : cardPanel.getComponents()) {
-                if (comp instanceof JPanel && ((JPanel) comp).getBorder() instanceof EmptyBorder) {
-                    atualizarLabelStatusNaTela(comp);
-                    break;
-                }
+            for (GastoDiario g : gastos) {
+                total += g.getValor();
+                String dataFormatada = g.getDataCriacao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                tableModel.addRow(new Object[]{
+                    dataFormatada,
+                    String.format("R$ %.2f", g.getValor()),
+                    g.getCategoria().getDescricao(),
+                    g.getDescricao()
+                });
             }
+            lblTotal.setText(String.format("Total: R$ %,10.2f", total));
         } catch (SQLException e) {
-            mostrarErro("Erro ao registrar: " + e.getMessage(), e);
-        }
-    }
-
-    private void atualizarLabelStatusNaTela(Component comp) {
-        if (comp instanceof JPanel) {
-            for (Component c : ((JPanel) comp).getComponents()) {
-                atualizarLabelStatusNaTela(c);
-            }
-        } else if (comp instanceof JLabel) {
-            String texto = ((JLabel) comp).getText();
-            if (texto != null && (texto.contains("Hoje") || texto.contains("Voce"))) {
-                atualizarLabelStatus((JLabel) comp);
-            }
+            mostrarErro("Erro ao carregar gastos", e);
         }
     }
 
     // ============================================================
-    // 11. PAINEL DASHBOARD
+    // PAINEL DASHBOARD
     // ============================================================
     
     private JPanel criarPainelDashboard() {
@@ -676,12 +710,23 @@ public class MainDesktopApp extends JFrame {
         scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(WARNING), "Resumo Financeiro"));
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.setBackground(BG_DARK);
-        JButton btnAtualizar = criarBotaoRedondo("Atualizar Dashboard", WARNING, WARNING.brighter());
+        
+        JButton btnAtualizar = criarBotaoRedondo("Atualizar", WARNING, WARNING.brighter());
         btnAtualizar.setForeground(Color.BLACK);
         btnAtualizar.addActionListener(e -> mostrarDashboard(dashboardArea));
         buttonPanel.add(btnAtualizar);
+        
+        // NOVO BOTÃO: Limpar Dashboard
+        JButton btnLimparDashboard = criarBotaoRedondo("Limpar Dashboard", DANGER, DANGER.brighter());
+        btnLimparDashboard.setForeground(Color.WHITE);
+        btnLimparDashboard.addActionListener(e -> {
+            dashboardArea.setText("");
+            mostrarSucesso("Dashboard limpo!");
+        });
+        buttonPanel.add(btnLimparDashboard);
+        
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         mostrarDashboard(dashboardArea);
@@ -702,7 +747,6 @@ public class MainDesktopApp extends JFrame {
         sb.append("              DASHBOARD FINANCEIRO\n");
         sb.append("=".repeat(60)).append("\n\n");
 
-        // REGRA DOS 3 DIAS - usando ResumoDesejos
         sb.append("REGRA DOS 3 DIAS\n").append("-".repeat(40)).append("\n");
         try {
             var resumo = regraTresDiasService.getResumoDesejos();
@@ -710,32 +754,41 @@ public class MainDesktopApp extends JFrame {
             sb.append(String.format("Desejos liberados:    %d\n", resumo.getLiberados()));
             sb.append(String.format("Total bloqueado:      R$ %,10.2f\n", resumo.getTotalBloqueado()));
             sb.append(String.format("Economia potencial:   R$ %,10.2f\n\n", resumo.getEconomiaPotencial()));
-        } catch (SQLException e) { 
-            sb.append("Erro ao carregar desejos\n\n"); 
-        }
+        } catch (SQLException e) { sb.append("Erro ao carregar desejos\n\n"); }
 
-        // REGRA DO PRIMEIRO EU - usando getTotalRendaMesAtual do Service
         sb.append("REGRA DO PRIMEIRO EU\n").append("-".repeat(40)).append("\n");
         try {
-            double totalRendaMes = primeiroEuService.getTotalRendaMesAtual();
-            double totalPoupadoMes = totalRendaMes * 0.10;
-            sb.append(String.format("Renda total do mes:   R$ %,10.2f\n", totalRendaMes));
-            sb.append(String.format("Total poupado (10%%): R$ %,10.2f\n", totalPoupadoMes));
-            sb.append(String.format("Meta anual:           R$ %,10.2f\n\n", totalPoupadoMes * 12));
+            var resumo = primeiroEuService.getResumoRendas();
+            sb.append(resumo.formatar()).append("\n");
         } catch (SQLException e) { 
             sb.append("Erro ao carregar rendas\n\n"); 
         }
 
-        // CHECKLIST DIARIO - usando ResumoChecklist
         sb.append("CHECKLIST DIARIO\n").append("-".repeat(40)).append("\n");
         try {
             var resumo = checklistService.getResumoChecklist();
             sb.append(String.format("Taxa de sucesso:      %.1f%%\n", resumo.getTaxaSucesso()));
             sb.append("Status hoje:          " + resumo.getStatusHojeTexto() + "\n");
             sb.append("\n").append(resumo.getRecomendacao());
-        } catch (SQLException e) { 
-            sb.append("Erro ao carregar checklist\n"); 
-        }
+        } catch (SQLException e) { sb.append("Erro ao carregar checklist\n"); }
+
+        sb.append("\nRESUMO DE GASTOS DO MES\n").append("-".repeat(40)).append("\n");
+        try {
+            var resumoGastos = gastoService.getResumoGastosMensal();
+            sb.append(resumoGastos.formatar()).append("\n");
+            
+            double totalRendaMes = primeiroEuService.getTotalRendaMesAtual();
+            double limiteRecomendado = totalRendaMes * 0.90;
+            sb.append(String.format("\nLimite recomendado (90%% da renda): R$ %,10.2f\n", limiteRecomendado));
+            
+            if (resumoGastos.getTotalGastosMes() > limiteRecomendado) {
+                double excedente = resumoGastos.getTotalGastosMes() - limiteRecomendado;
+                sb.append(String.format("⚠️ ATENÇÃO: Você gastou R$ %,10.2f acima do recomendado!\n", excedente));
+            } else {
+                double economia = limiteRecomendado - resumoGastos.getTotalGastosMes();
+                sb.append(String.format("✅ Bom trabalho! Você economizou R$ %,10.2f dentro do seu orçamento.\n", economia));
+            }
+        } catch (SQLException e) { sb.append("Erro ao carregar gastos\n\n"); }
 
         sb.append("\n\n").append("=".repeat(60)).append("\n");
         sb.append("     Continue assim! Controle financeiro e habito!\n");
@@ -747,9 +800,8 @@ public class MainDesktopApp extends JFrame {
     private void mostrarModalDashboard(String conteudo) {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(PANEL_DARK);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(WARNING, 2),
-            BorderFactory.createEmptyBorder(20, 25, 20, 25)));
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(WARNING, 2), 
+        		BorderFactory.createEmptyBorder(20, 25, 20, 25)));
         
         JTextArea textArea = new JTextArea(conteudo);
         textArea.setEditable(false);
@@ -789,7 +841,7 @@ public class MainDesktopApp extends JFrame {
     }
 
     // ============================================================
-    // 12. MÉTODO ÚNICO PARA BOTÕES REDONDOS
+    // BOTÕES REDONDOS
     // ============================================================
     
     private JButton criarBotaoRedondo(String texto, Color corNormal, Color corHover) {
@@ -817,7 +869,7 @@ public class MainDesktopApp extends JFrame {
     }
 
     // ============================================================
-    // 13. MÉTODOS DE MODAL (UNIFICADOS)
+    // MODAIS
     // ============================================================
     
     private void mostrarErro(String mensagem, Exception e) {
@@ -838,9 +890,8 @@ public class MainDesktopApp extends JFrame {
         
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(PANEL_DARK);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(cor, 2),
-            BorderFactory.createEmptyBorder(20, 25, 20, 25)));
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(cor, 2), 
+        		BorderFactory.createEmptyBorder(20, 25, 20, 25)));
         
         if (icon != null) {
             JLabel lblIcon = new JLabel(icon);
@@ -889,9 +940,8 @@ public class MainDesktopApp extends JFrame {
     private boolean mostrarConfirmacaoEscura(String mensagem, String titulo) {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(PANEL_DARK);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(MINT, 2),
-            BorderFactory.createEmptyBorder(25, 35, 25, 35)));
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(MINT, 2), 
+        		BorderFactory.createEmptyBorder(25, 35, 25, 35)));
         
         JLabel lbl = new JLabel("<html><div style='text-align: center; width: 280px;'>" + mensagem + "</div></html>");
         lbl.setForeground(TEXT_PRIMARY);
@@ -923,9 +973,9 @@ public class MainDesktopApp extends JFrame {
         dialog.setVisible(true);
         return escolha[0];
     }
-    
+
     // ============================================================
-    // 14. MAIN
+    // MAIN
     // ============================================================
     
     public static void main(String[] args) {

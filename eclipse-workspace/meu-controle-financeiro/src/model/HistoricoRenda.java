@@ -9,26 +9,46 @@ public class HistoricoRenda {
 
     private int id;
     private double valorTotal;
+    private String descricao;
+    private CategoriaRenda categoria;
     private LocalDate dataRegistro;
 
-    public HistoricoRenda(double valorTotal) {
+    // Construtor para NOVA renda (sem ID)
+    public HistoricoRenda(double valorTotal, String descricao, CategoriaRenda categoria) {
         this.valorTotal = valorTotal;
+        this.descricao = descricao;
+        this.categoria = categoria;
         this.dataRegistro = LocalDate.now();
     }
 
-    public HistoricoRenda(int id, double valorTotal, LocalDate dataRegistro) {
+    // Construtor para RECUPERAR renda do banco (com ID)
+    public HistoricoRenda(int id, double valorTotal, String descricao, String categoria, LocalDate dataRegistro) {
         this.id = id;
         this.valorTotal = valorTotal;
+        this.descricao = descricao;
+        this.categoria = CategoriaRenda.valueOf(categoria);
         this.dataRegistro = dataRegistro;
     }
 
     // Getters e Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
+    
     public double getValorTotal() { return valorTotal; }
     public void setValorTotal(double valorTotal) { this.valorTotal = valorTotal; }
+    
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
+    
+    public CategoriaRenda getCategoria() { return categoria; }
+    public void setCategoria(CategoriaRenda categoria) { this.categoria = categoria; }
+    
     public LocalDate getDataRegistro() { return dataRegistro; }
     public void setDataRegistro(LocalDate dataRegistro) { this.dataRegistro = dataRegistro; }
+
+    public String getCategoriaString() {
+        return categoria.name();
+    }
 
     public double getValorPoupar() {
         return valorTotal * PERCENTUAL_POUPANCA;
@@ -38,26 +58,18 @@ public class HistoricoRenda {
         return valorTotal - getValorPoupar();
     }
 
-    // NOVO MÉTODO: Retorna o percentual formatado para exibição
-    public String getPercentualFormatado() {
-        return String.format("%.0f%%", PERCENTUAL_POUPANCA * 100);
-    }
-
-    // NOVO MÉTODO: Verifica se a renda é do mês atual
     public boolean isRendaMesAtual() {
         LocalDate hoje = LocalDate.now();
         return dataRegistro.getYear() == hoje.getYear() && 
                dataRegistro.getMonth() == hoje.getMonth();
     }
 
-    // NOVO MÉTODO: Retorna resumo formatado
-    public String getResumoFormatado() {
-        return String.format("R$ %,10.2f em %s", valorTotal, 
-               dataRegistro.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+    public String getDataFormatada() {
+        return dataRegistro.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
     @Override
     public String toString() {
-        return String.format("Renda: R$ %.2f em %s", valorTotal, dataRegistro);
+        return String.format("[%s] %s: R$ %.2f em %s", categoria.getDescricao(), descricao, valorTotal, getDataFormatada());
     }
 }
